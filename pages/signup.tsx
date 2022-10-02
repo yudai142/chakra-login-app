@@ -1,4 +1,8 @@
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useAuth, useUser } from "../hooks/firebase";
 
 type Inputs = {
   email: string;
@@ -12,9 +16,38 @@ export default function Signup() {
     handleSubmit,
     formState: { errors },
   } = useForm<Inputs>();
+  const auth = useAuth();
+  const currentUser = useUser();
+  const router = useRouter();
+  const signup = async (email: string, password: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      console.log("ユーザー登録成功")
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const onSubmit: SubmitHandler<Inputs> = ({
+    email,
+    password,
+    confirmationPassword,
+  }) => {
+    if (password === confirmationPassword) {
+      signup(email, password);
+    } else {
+      alert("パスワードが一致しません");
+    }
+  };
+  useEffect(() => {
+    if (currentUser) router.push("/");
+  }, [currentUser, router]);
   return (
     <div>
-      <form>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label>Eメール</label>
           <input type="email" placeholder="example@text.com" {...register("email", { required: true })}/>
